@@ -4,7 +4,16 @@ typer>=0.25
 python-dotenv>=1.0
 httpx>=0.28
 numpy>=2.4
-opencv-contrib-python>=5.0
+
+# Headless build: the server image has no libGL, and nothing here calls
+# cv2.imshow. Swap back to opencv-contrib-python for GUI work.
+opencv-contrib-python-headless>=5.0
+
+# UI server (ui/server.py). python-multipart backs the UploadFile/Form
+# handlers — FastAPI raises at import without it.
+fastapi>=0.115
+uvicorn[standard]>=0.34
+python-multipart>=0.0.9
 
 # Optional, higher-accuracy backends. The pipeline degrades gracefully
 # without them — check `vre doctor` to see what is active.

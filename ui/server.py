@@ -9,6 +9,7 @@ gated behind an explicit confirm and always shows the cost first.
 
 from __future__ import annotations
 
+import os
 import shutil
 import sys
 import threading
@@ -392,5 +393,10 @@ def http_error(request, exc: HTTPException) -> JSONResponse:
 
 if __name__ == "__main__":
     _reset_dirs()
-    print("\n  vre UI  ->  http://127.0.0.1:7860\n")
-    uvicorn.run(app, host="127.0.0.1", port=7860, log_level="warning")
+    # Bind 0.0.0.0 in a container: a process listening only on loopback is
+    # unreachable from outside it. PORT is injected by the host in production
+    # and falls back to 7860 for local runs.
+    host = os.environ.get("HOST", "0.0.0.0")
+    port = int(os.environ.get("PORT", "7860"))
+    print(f"\n  vre UI  ->  http://127.0.0.1:{port}\n")
+    uvicorn.run(app, host=host, port=port, log_level="warning")
