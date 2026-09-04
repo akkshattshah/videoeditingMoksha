@@ -1,0 +1,6 @@
+# reference2 - swap the subject (person + garment) for the man in the hoodie photo.
+# Lines starting with # are ignored.
+
+Replace the man in the bright blue hooded jacket with the man shown in the reference image, wearing his tan Desert Dune oversized hoodie. He is the same person as in the reference image: the same young man with short swept brown hair and clean-shaven face, and he wears the same heavyweight tan hoodie with its ribbed cuffs and hem, kangaroo front pocket, and the small rectangular graphic patch across the chest. The hoodie is a soft camel-brown pullover, thick and structured, falling loose and oversized on him, its fabric folding and creasing naturally as he moves. His trousers become matching tan.
+
+Everything else stays exactly as it is: the grey studio wall, the ladder, the floor, the lighting, and every camera movement, cut and transition.

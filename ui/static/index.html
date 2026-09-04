@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>vre — reference editor</title>
+<style>
+  :root{
+    --bg:#0e1013; --panel:#16191f; --panel2:#1c2027; --line:#272c35;
+    --txt:#e8eaee; --dim:#8b93a1; --accent:#f5c518;
+    --ok:#3ddc84; --warn:#ffb020; --err:#ff5f56; --radius:10px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);
+    font:14px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:880px;margin:0 auto;padding:28px 20px 80px}
+  header{display:flex;align-items:baseline;gap:12px;margin-bottom:6px}
+  h1{font-size:19px;margin:0;letter-spacing:-.01em}
+  .sub{color:var(--dim);font-size:13px}
+  .credits{margin-left:auto;font-size:12px;color:var(--dim);
+    font-variant-numeric:tabular-nums}
+  .credits b{color:var(--ok)}
+
+  section{background:var(--panel);border:1px solid var(--line);
+    border-radius:var(--radius);padding:18px;margin-top:16px}
+  .head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .num{width:22px;height:22px;border-radius:6px;background:var(--panel2);
+    border:1px solid var(--line);display:grid;place-items:center;
+    font-size:11px;color:var(--dim);flex:none}
+  h2{font-size:14px;margin:0;font-weight:600}
+  .opt{font-size:11px;color:var(--dim);border:1px solid var(--line);
+    padding:1px 7px;border-radius:20px}
+
+  .drop{border:1.5px dashed var(--line);border-radius:var(--radius);
+    padding:34px 20px;text-align:center;cursor:pointer;transition:.15s;
+    background:var(--panel2)}
+  .drop:hover,.drop.over{border-color:var(--accent);background:#1f2229}
+  .drop .big{font-size:14px;margin-bottom:4px}
+  .drop .small{font-size:12px;color:var(--dim)}
+
+  .refrow{display:flex;gap:16px;align-items:flex-start}
+  video{width:190px;border-radius:8px;background:#000;display:block}
+  .meta{flex:1;min-width:0}
+  .meta .name{font-weight:600;margin-bottom:8px;word-break:break-all}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;font-size:12.5px}
+  .kv span:nth-child(odd){color:var(--dim)}
+  .kv span{font-variant-numeric:tabular-nums}
+
+  .el{display:flex;gap:10px;align-items:center;background:var(--panel2);
+    border:1px solid var(--line);border-radius:8px;padding:9px;margin-bottom:9px}
+  .el img{width:46px;height:46px;object-fit:cover;border-radius:6px;flex:none;
+    background:#000}
+  .el .nm{flex:1;min-width:0;font-size:12.5px;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap}
+  .el .nm small{color:var(--dim);display:block;font-size:11px}
+
+  select,input[type=text],textarea{background:var(--panel2);color:var(--txt);
+    border:1px solid var(--line);border-radius:7px;padding:8px 10px;
+    font:inherit;outline:none}
+  select:focus,textarea:focus{border-color:var(--accent)}
+  select{cursor:pointer}
+  textarea{width:100%;resize:vertical;min-height:76px;line-height:1.55}
+
+  button{background:var(--panel2);color:var(--txt);border:1px solid var(--line);
+    border-radius:7px;padding:8px 14px;font:inherit;cursor:pointer;
+    transition:.15s}
+  button:hover:not(:disabled){border-color:#3a414e;background:#232833}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  .primary{background:var(--accent);color:#141414;border-color:var(--accent);
+    font-weight:600}
+  .primary:hover:not(:disabled){filter:brightness(1.08);background:var(--accent)}
+  .ghost{background:transparent}
+  .x{background:transparent;border:none;color:var(--dim);font-size:17px;
+    padding:2px 7px;line-height:1}
+  .x:hover{color:var(--err)}
+  .add{width:100%;border-style:dashed;color:var(--dim);padding:10px}
+  .add:hover{color:var(--txt);border-color:var(--accent)}
+
+  .newel{display:flex;gap:8px;align-items:center;margin-bottom:9px}
+  .newel select{flex:none;min-width:168px}
+  .newel .file{flex:1}
+
+  .bar{display:flex;gap:10px;align-items:center;margin-top:18px;flex-wrap:wrap}
+  .bar .spacer{flex:1}
+  .cost{font-variant-numeric:tabular-nums;font-size:13px}
+  .cost b{font-size:16px;color:var(--accent)}
+
+  .shots{margin-top:14px;border-top:1px solid var(--line);padding-top:14px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;
+    font-variant-numeric:tabular-nums}
+  th{text-align:left;color:var(--dim);font-weight:500;padding:4px 8px 6px 0;
+    font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+  td{padding:3px 8px 3px 0;border-top:1px solid #1f242c}
+  .tag{display:inline-block;padding:1px 7px;border-radius:4px;font-size:11px;
+    background:var(--panel2);border:1px solid var(--line);color:var(--dim)}
+  .tag.route{color:var(--ok);border-color:#28613f;background:#12251b}
+
+  .msg{padding:9px 12px;border-radius:7px;font-size:12.5px;margin-top:12px}
+  .msg.warn{background:#2a2213;border:1px solid #5a4a1e;color:#ffd479}
+  .msg.err{background:#2b1618;border:1px solid #5e2a2c;color:#ff9a95}
+  .hide{display:none}
+
+  /* plan */
+  .scene{color:var(--dim);font-size:13px;font-style:italic;margin-bottom:14px;
+    padding-left:10px;border-left:2px solid var(--line)}
+  .lbl{display:block;font-size:11px;text-transform:uppercase;
+    letter-spacing:.05em;color:var(--dim);margin-bottom:7px}
+  .chg{background:var(--panel2);border:1px solid var(--line);border-left:3px solid
+    var(--accent);border-radius:7px;padding:11px 13px;margin-bottom:8px}
+  .chg .t{font-weight:600;margin-bottom:5px}
+  .chg .arrow{font-size:12.5px;color:var(--dim);line-height:1.7}
+  .chg .arrow b{color:var(--txt);font-weight:500}
+  .chg .meta2{margin-top:6px;display:flex;gap:6px;flex-wrap:wrap}
+  .keep{background:#12251b;border:1px solid #28613f;border-radius:7px;
+    padding:11px 13px;margin-top:12px}
+  .keep .t{color:var(--ok);font-weight:600;font-size:12.5px;margin-bottom:5px}
+  .keep ul{margin:0;padding-left:18px;font-size:12.5px;color:var(--dim)}
+  .concern{background:#2a2213;border:1px solid #5a4a1e;border-radius:7px;
+    padding:11px 13px;margin-top:10px;font-size:12.5px;color:#ffd479}
+  .concern ul{margin:4px 0 0;padding-left:18px}
+  .promptbox{margin-top:14px}
+  .promptbox textarea{font-family:ui-monospace,Consolas,monospace;font-size:12px;
+    min-height:88px;color:#c9d1d9}
+  .planedit{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
+  .hist{font-size:11.5px;color:var(--dim);margin-top:10px}
+  .hist div{padding:3px 0 3px 12px;border-left:2px solid var(--line)}
+  .log{font-family:ui-monospace,Consolas,monospace;font-size:12px;
+    background:#0b0d10;border:1px solid var(--line);border-radius:7px;
+    padding:11px 13px;max-height:210px;overflow:auto;color:var(--dim);
+    white-space:pre-wrap}
+  .log b{color:var(--txt);font-weight:500}
+  video.result{width:100%;max-width:330px;border-radius:8px;margin-top:12px}
+  .spin{display:inline-block;width:12px;height:12px;border:2px solid #444;
+    border-top-color:var(--accent);border-radius:50%;animation:s .7s linear infinite;
+    vertical-align:-2px;margin-right:6px}
+  @keyframes s{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>vre</h1>
+    <span class="sub">reference video → same structure, new elements</span>
+    <span class="credits" id="credits"></span>
+  </header>
+
+  <!-- 1 REFERENCE -->
+  <section>
+    <div class="head"><div class="num">1</div><h2>Reference video</h2></div>
+    <div id="refEmpty">
+      <div class="drop" id="refDrop">
+        <div class="big">Drop a video here</div>
+        <div class="small">or click to browse — mp4, mov, webm</div>
+      </div>
+      <input type="file" id="refInput" accept="video/*" class="hide">
+    </div>
+    <div id="refFilled" class="hide">
+      <div class="refrow">
+        <video id="refVideo" controls muted playsinline></video>
+        <div class="meta">
+          <div class="name" id="refName"></div>
+          <div class="kv" id="refMeta"></div>
+          <div style="margin-top:12px">
+            <button class="ghost" id="refClear">Replace</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 ELEMENTS -->
+  <section>
+    <div class="head"><div class="num">2</div><h2>Elements</h2>
+      <span class="opt">optional</span></div>
+    <div id="elList"></div>
+    <div class="newel hide" id="newRow">
+      <select id="elKind"></select>
+      <input type="file" id="elFile" accept="image/*" class="file">
+      <button class="x" id="elCancel" title="cancel">&times;</button>
+    </div>
+    <button class="add" id="elAdd">+ Add element</button>
+  </section>
+
+  <!-- 3 PROMPT -->
+  <section>
+    <div class="head"><div class="num">3</div><h2>Custom instructions</h2>
+      <span class="opt">optional</span></div>
+    <textarea id="prompt" placeholder="Describe only what should change. Everything you don't mention is preserved.
+
+e.g. Change the top and leggings to pale yellow #FEF2A0, keeping the knit texture and shadows physically accurate."></textarea>
+  </section>
+
+  <!-- 4 ANALYZE -->
+  <section>
+    <div class="head"><div class="num">4</div><h2>Analyse &amp; price</h2>
+      <span class="opt">free</span></div>
+    <div class="newel">
+      <select id="model"></select>
+      <select id="segLen">
+        <option value="5">first 5 seconds</option>
+        <option value="10">first 10 seconds</option>
+        <option value="0">whole video</option>
+      </select>
+      <button id="analyze">Analyse</button>
+    </div>
+    <div id="analysisOut"></div>
+    <div class="bar">
+      <div class="cost" id="costLine"></div>
+      <div class="spacer"></div>
+      <button class="primary" id="makePlan" disabled>Generate</button>
+    </div>
+  </section>
+
+  <!-- 5 PLAN -->
+  <section id="planSection" class="hide">
+    <div class="head"><div class="num">5</div><h2>What the AI will do</h2>
+      <span class="opt" id="revBadge">review before spending</span></div>
+    <div id="planOut"></div>
+
+    <div class="planedit">
+      <label class="lbl">Not right? Tell it what to change</label>
+      <textarea id="feedback" placeholder="e.g. No — the background must stay exactly as it is, just change broad daylight to a warm sunset."></textarea>
+      <div class="bar" style="margin-top:10px">
+        <button id="revise">Revise plan</button>
+        <div class="spacer"></div>
+        <span class="cost" id="planCost"></span>
+        <button class="primary" id="confirm">Looks right — generate</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 RESULT -->
+  <section id="runSection" class="hide">
+    <div class="head"><div class="num">6</div><h2>Generating</h2></div>
+    <div id="runLog" class="log"></div>
+    <div id="runOut"></div>
+  </section>
+
+  <div id="msg"></div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+let S = null;
+
+const fmt = n => Number(n).toLocaleString(undefined,{maximumFractionDigits:2});
+
+function msg(text, kind='err'){
+  $('#msg').innerHTML = text ? `<div class="msg ${kind}">${text}</div>` : '';
+}
+
+async function api(path, opts){
+  const r = await fetch(path, opts);
+  const j = await r.json().catch(()=>({error:'bad response'}));
+  if(!r.ok) throw new Error(j.error || r.statusText);
+  return j;
+}
+
+function render(){
+  // reference
+  if(S.reference){
+    $('#refEmpty').classList.add('hide');
+    $('#refFilled').classList.remove('hide');
+    $('#refVideo').src = S.reference.url;
+    $('#refName').textContent = S.reference.name;
+    const r = S.reference;
+    $('#refMeta').innerHTML = `
+      <span>resolution</span><span>${r.width}&times;${r.height} (${r.aspect})</span>
+      <span>duration</span><span>${fmt(r.duration)}s</span>
+      <span>frame rate</span><span>${r.fps} fps</span>
+      <span>audio</span><span>${r.has_audio?'yes':'none'}</span>
+      <span>size</span><span>${r.size_mb} MB</span>`;
+  } else {
+    $('#refEmpty').classList.remove('hide');
+    $('#refFilled').classList.add('hide');
+  }
+
+  // elements
+  const types = Object.fromEntries(S.element_types.map(t=>[t.id,t.label]));
+  $('#elList').innerHTML = S.elements.map(e=>`
+    <div class="el">
+      <img src="${e.url}" alt="">
+      <div class="nm">${types[e.kind]||e.kind}<small>${e.name} · ${e.size_kb} KB</small></div>
+      <button class="x" data-del="${e.id}" title="remove">&times;</button>
+    </div>`).join('');
+  $('#elList').querySelectorAll('[data-del]').forEach(b=>{
+    b.onclick = async()=>{ S = await api('/api/element/'+b.dataset.del,{method:'DELETE'}); render(); };
+  });
+
+  // analysis
+  const a = S.analysis;
+  if(a){
+    $('#analysisOut').innerHTML = `
+      <div class="shots">
+        <div style="margin-bottom:10px">
+          <span class="tag route">route: ${a.route}</span>
+          <span class="tag">${a.shots.length} shots · ${a.cut_count} cuts</span>
+          <span class="tag">${fmt(a.segment_seconds)}s</span>
+          ${a.bpm?`<span class="tag">${fmt(a.bpm)} bpm</span>`:''}
+        </div>
+        <table>
+          <tr><th>shot</th><th>in</th><th>out</th><th>camera</th><th>out cut</th></tr>
+          ${a.shots.map(s=>`<tr><td>${s.id}</td><td>${fmt(s.t_in)}s</td>
+            <td>${fmt(s.t_out)}s</td><td>${s.camera}</td><td>${s.transition}</td></tr>`).join('')}
+        </table>
+      </div>`;
+    $('#costLine').innerHTML =
+      `${a.model.label} · ${fmt(a.segment_seconds)}s × $${a.model.rate}/s = <b>$${a.cost.toFixed(2)}</b>`;
+    $('#makePlan').disabled = false;
+    if(a.warnings && a.warnings.length)
+      msg(a.warnings.map(w=>'⚠ '+w).join('<br>'), 'warn');
+  } else {
+    $('#analysisOut').innerHTML = '';
+    $('#costLine').textContent = '';
+    $('#makePlan').disabled = true;
+  }
+
+  renderPlan();
+}
+
+function renderPlan(){
+  const p = S.plan;
+  if(!p){ $('#planSection').classList.add('hide'); return; }
+  $('#planSection').classList.remove('hide');
+  $('#revBadge').textContent = p.revision
+    ? `revision ${p.revision}` : 'review before spending';
+
+  const chg = (p.changes||[]).map(c=>`
+    <div class="chg">
+      <div class="t">${esc(c.target)}</div>
+      <div class="arrow">${esc(c.from_desc)}<br>&darr; <b>${esc(c.to_desc)}</b></div>
+      <div class="meta2">
+        ${c.source?`<span class="tag">${esc(c.source)}</span>`:''}
+        ${(c.shots||[]).map(s=>`<span class="tag">${esc(s)}</span>`).join('')}
+      </div>
+    </div>`).join('');
+
+  const keep = (p.preserved||[]).length ? `
+    <div class="keep"><div class="t">Stays exactly as it is</div>
+      <ul>${p.preserved.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>` : '';
+
+  const con = (p.concerns||[]).length ? `
+    <div class="concern"><b>Worth knowing</b>
+      <ul>${p.concerns.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>` : '';
+
+  const hist = (p.history||[]).length ? `
+    <div class="hist"><b>Your corrections</b>
+      ${p.history.map(h=>`<div>"${esc(h)}"</div>`).join('')}</div>` : '';
+
+  $('#planOut').innerHTML = `
+    ${p.scene?`<div class="scene">${esc(p.scene)}</div>`:''}
+    ${chg || '<div class="msg warn">No changes were identified. Add an element or write instructions.</div>'}
+    ${keep}${con}
+    <div class="promptbox">
+      <label class="lbl">Exact instruction that will be sent — editable</label>
+      <textarea id="genPrompt">${esc(p.generation_prompt||'')}</textarea>
+    </div>
+    ${hist}`;
+
+  $('#genPrompt').onchange = async e=>{
+    const fd = new FormData(); fd.append('generation_prompt', e.target.value);
+    S = await api('/api/plan/prompt',{method:'POST',body:fd});
+  };
+
+  const a = S.analysis;
+  if(a) $('#planCost').innerHTML =
+    `this will spend <b>$${a.cost.toFixed(2)}</b>`;
+}
+
+function esc(s){ return String(s??'').replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c])); }
+
+// ---- reference upload
+function pickRef(){ $('#refInput').click(); }
+$('#refDrop').onclick = pickRef;
+$('#refDrop').ondragover = e=>{e.preventDefault();$('#refDrop').classList.add('over')};
+$('#refDrop').ondragleave = ()=>$('#refDrop').classList.remove('over');
+$('#refDrop').ondrop = e=>{
+  e.preventDefault(); $('#refDrop').classList.remove('over');
+  if(e.dataTransfer.files[0]) uploadRef(e.dataTransfer.files[0]);
+};
+$('#refInput').onchange = e => e.target.files[0] && uploadRef(e.target.files[0]);
+$('#refClear').onclick = async()=>{ S = await api('/api/reset',{method:'POST'}); render(); };
+
+async function uploadRef(file){
+  msg('');
+  $('#refDrop').innerHTML = '<div class="big"><span class="spin"></span>reading video…</div>';
+  const fd = new FormData(); fd.append('file', file);
+  try{ S = await api('/api/reference',{method:'POST',body:fd}); render(); }
+  catch(err){
+    msg(err.message);
+    $('#refDrop').innerHTML =
+      '<div class="big">Drop a video here</div><div class="small">or click to browse</div>';
+  }
+}
+
+// ---- elements
+$('#elAdd').onclick = ()=>{
+  $('#newRow').classList.remove('hide');
+  $('#elAdd').classList.add('hide');
+  $('#elFile').value='';
+};
+$('#elCancel').onclick = ()=>{
+  $('#newRow').classList.add('hide'); $('#elAdd').classList.remove('hide');
+};
+$('#elFile').onchange = async e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const fd = new FormData();
+  fd.append('kind', $('#elKind').value); fd.append('file', f);
+  try{
+    S = await api('/api/element',{method:'POST',body:fd});
+    $('#newRow').classList.add('hide'); $('#elAdd').classList.remove('hide');
+    render(); msg('');
+  }catch(err){ msg(err.message); }
+};
+
+// ---- prompt (debounced save)
+let pt;
+$('#prompt').oninput = ()=>{
+  clearTimeout(pt);
+  pt = setTimeout(async()=>{
+    const fd = new FormData(); fd.append('prompt', $('#prompt').value);
+    S = await api('/api/prompt',{method:'POST',body:fd});
+  }, 400);
+};
+
+// ---- analyse
+$('#analyze').onclick = async()=>{
+  if(!S.reference){ msg('Upload a reference video first.'); return; }
+  msg(''); const btn=$('#analyze');
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span>analysing…';
+  const fd = new FormData();
+  fd.append('seconds', $('#segLen').value);
+  fd.append('start','0'); fd.append('model', $('#model').value);
+  try{ S = await api('/api/analyze',{method:'POST',body:fd}); render(); }
+  catch(err){ msg(err.message); }
+  finally{ btn.disabled=false; btn.textContent='Analyse'; }
+};
+
+// ---- plan
+async function buildPlan(feedback){
+  const btns = [$('#makePlan'), $('#revise')];
+  btns.forEach(b=>b.disabled=true);
+  const active = feedback ? $('#revise') : $('#makePlan');
+  const label = active.textContent;
+  active.innerHTML = '<span class="spin"></span>reading the reference…';
+  msg('');
+  try{
+    const fd = new FormData(); fd.append('feedback', feedback||'');
+    S = await api('/api/plan',{method:'POST',body:fd});
+    render();
+    if(feedback) $('#feedback').value='';
+    $('#planSection').scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(err){ msg(err.message); }
+  finally{ btns.forEach(b=>b.disabled=false); active.textContent = label; }
+}
+
+$('#makePlan').onclick = ()=>buildPlan('');
+$('#revise').onclick = ()=>{
+  const f = $('#feedback').value.trim();
+  if(!f){ msg('Write what you want changed about the plan first.'); return; }
+  buildPlan(f);
+};
+
+// ---- generate
+$('#confirm').onclick = async()=>{
+  const a = S.analysis;
+  if(!confirm(`This will spend $${a.cost.toFixed(2)} on ${a.model.label}.\n\nProceed?`)) return;
+  msg('');
+  $('#confirm').disabled = true; $('#revise').disabled = true;
+  $('#runSection').classList.remove('hide');
+  $('#runOut').innerHTML=''; $('#runLog').textContent='starting…';
+  $('#runSection').scrollIntoView({behavior:'smooth',block:'start'});
+  try{
+    const fd = new FormData(); fd.append('model', $('#model').value);
+    await api('/api/generate',{method:'POST',body:fd});
+    pollRun();
+  }catch(err){
+    msg(err.message);
+    $('#confirm').disabled=false; $('#revise').disabled=false;
+  }
+};
+
+async function pollRun(){
+  const j = await api('/api/generate');
+  $('#runLog').innerHTML = (j.log||[]).map(l=>esc(l)).join('\n');
+  if(j.status === 'running'){ setTimeout(pollRun, 3000); return; }
+
+  $('#confirm').disabled=false; $('#revise').disabled=false;
+  if(j.status === 'done'){
+    $('#runOut').innerHTML = `
+      <div class="msg" style="background:#12251b;border:1px solid #28613f;color:#7fe0a8">
+        Done — spent <b>$${(j.cost??0).toFixed(3)}</b> on ${esc(j.model||'')}
+      </div>
+      <video class="result" src="${j.result}" controls autoplay muted loop></video>`;
+  } else if(j.status === 'failed'){
+    msg('Generation failed: ' + esc(j.error||'unknown'));
+  }
+}
+
+// ---- boot
+(async()=>{
+  S = await api('/api/state');
+  $('#elKind').innerHTML = S.element_types
+    .map(t=>`<option value="${t.id}">${t.label}</option>`).join('');
+  $('#model').innerHTML = S.models
+    .map(m=>`<option value="${m.id}">${m.label} — $${m.rate}/s</option>`).join('');
+  render();
+  const c = await api('/api/credits');
+  $('#credits').innerHTML = c.ok
+    ? `credits <b>$${c.remaining.toFixed(2)}</b>`
+    : (S.has_key ? 'credits unavailable' : 'no API key');
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+# Core — all confirmed working on Python 3.14
+pydantic>=2.12
+typer>=0.25
+python-dotenv>=1.0
+httpx>=0.28
+numpy>=2.4
+opencv-contrib-python>=5.0
+
+# Optional, higher-accuracy backends. The pipeline degrades gracefully
+# without them — check `vre doctor` to see what is active.
+#
+# scenedetect>=0.6        # better shot detection than the builtin detector
+# librosa>=0.10           # better tempo/beat tracking than the numpy fallback
+# torch>=2.12             # already installed; required by the GPU backends below
+#
+# GPU backends — intended to run on Modal, not locally:
+#   transnetv2  (shot boundaries, handles dissolves)
+#   segment-anything-2  (subject masks)
+#   whisperx    (word-level VO alignment)
+#   depth-anything-v2   (depth for ControlNet conditioning)

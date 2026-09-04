@@ -1,0 +1,50 @@
+.env
+.env.*
+!.env.example
+
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# scratch / API dumps
+or_models.json
+*.tmp
+
+# analysis output
+/jobs/
+tests/fixtures/_segments/
+
+# media working files
+/media/
+/renders/
+/cache/
+*.mp4
+*.mov
+*.wav
+*.mp3
+!**/fixtures/**
+
+# analysis output
+testbench/input/*.mp4
+testbench/input/elements/*
+!testbench/input/elements/.gitkeep
+testbench/output/
+
+# UI runtime state
+ui/uploads/
+*.log
+
+# root-level diagnostic renders
+shotstrip.jpg
+hoodie_contact.jpg
+rebuild_cmp.jpg
+recut_cmp.jpg
+ref2_first6.jpg
+ref2_full.jpg
+rot_diag.jpg
+slant_check.jpg
+slant_now.jpg
+slant_sweep.jpg
+zoom_sweep.jpg
+v3_*.jpg
